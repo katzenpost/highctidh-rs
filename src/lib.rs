@@ -6,6 +6,14 @@
 //! signed exponents, one byte each. The shared secret is the public key the
 //! group action reaches, so it is 128 bytes too.
 
+#![no_std]
+
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
+
+use alloc::{format, string::String, vec::Vec};
+
 use rand_core::CryptoRng;
 use subtle::ConstantTimeEq;
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
@@ -29,8 +37,8 @@ pub enum Error {
     LowOrderPoint,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Error::InvalidLength { expected, actual } => {
                 write!(f, "invalid length: expected {expected}, got {actual}")
@@ -41,9 +49,9 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error {}
+impl core::error::Error for Error {}
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 fn check_len(bytes: &[u8], expected: usize) -> Result<()> {
     if bytes.len() == expected {
@@ -95,8 +103,8 @@ impl PublicKey {
     }
 }
 
-impl std::fmt::Debug for PublicKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Debug for PublicKey {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let prefix: String = self.to_bytes()[..8]
             .iter()
             .map(|b| format!("{b:02x}"))
@@ -155,8 +163,8 @@ impl PrivateKey {
     }
 }
 
-impl std::fmt::Debug for PrivateKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Debug for PrivateKey {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ctidh1024::PrivateKey")
             .finish_non_exhaustive()
     }

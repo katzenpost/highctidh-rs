@@ -1,6 +1,6 @@
 //! The raw highctidh CTIDH-1024 functions and their C layouts.
 
-use std::ffi::c_void;
+use core::ffi::c_void;
 
 use rand_core::CryptoRng;
 use zeroize::Zeroize;
@@ -38,7 +38,7 @@ extern "C" fn fill_from_rng(out: *mut c_void, len: usize, ctx: usize) {
     let (rng, out) = unsafe {
         (
             &mut *(ctx as *mut &mut dyn CryptoRng),
-            std::slice::from_raw_parts_mut(out.cast::<u8>(), len),
+            core::slice::from_raw_parts_mut(out.cast::<u8>(), len),
         )
     };
     rng.fill_bytes(out);
