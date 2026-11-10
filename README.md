@@ -12,7 +12,8 @@ turns on `std` in its dependencies. Building for another target compiles the C
 for that target, so it needs that target's C compiler and libc headers, e.g.
 `gcc-arm-none-eabi` and `libnewlib-arm-none-eabi` for `thumbv7em-none-eabihf`.
 On a target without an OS `randombytes.c` is left out and the final link must
-provide `highctidh_1024_randombytes(void *, size_t)`.
+provide `highctidh_1024_randombytes(void *, size_t)`; `bare-metal/endian.h`
+stands in for the `<endian.h>` newlib lacks.
 
 To link a highctidh built elsewhere instead, such as the T-Deck firmware's
 `kq_ctidh` component, set `HIGHCTIDH_LIB_DIR` to the directory holding the

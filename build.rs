@@ -9,6 +9,7 @@
 
 fn main() {
     println!("cargo:rerun-if-changed=highctidh");
+    println!("cargo:rerun-if-changed=bare-metal");
     println!("cargo:rerun-if-env-changed=HIGHCTIDH_LIB_DIR");
     println!("cargo:rerun-if-env-changed=HIGHCTIDH_LIB_NAME");
     if let Ok(lib_dir) = std::env::var("HIGHCTIDH_LIB_DIR") {
@@ -33,6 +34,10 @@ fn main() {
         {
             build.file(&path);
         }
+    }
+    if bare_metal {
+        // newlib has no <endian.h>.
+        build.include("bare-metal");
     }
     build
         .include(dir)
