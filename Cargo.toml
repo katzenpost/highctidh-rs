@@ -2,15 +2,22 @@
 name = "highctidh"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
 description = "CTIDH-1024 from the highctidh C library"
 license-file = "LICENSE"
 repository = "https://github.com/katzenpost/highctidh-rs"
 publish = false
 
+[features]
+default = ["std"]
+std = ["subtle/std", "zeroize/std"]
+# Link a highctidh built elsewhere instead of compiling the vendored C.
+external = []
+
 [dependencies]
 rand_core = "0.10"
-subtle = "2.6.1"
-zeroize = { version = "1.9.1", features = ["derive"] }
+subtle = { version = "2.6.1", default-features = false, features = ["i128"] }
+zeroize = { version = "1.9.1", default-features = false, features = ["alloc", "derive"] }
 
 [build-dependencies]
 cc = "1.2"

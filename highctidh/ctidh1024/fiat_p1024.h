@@ -12,8 +12,11 @@ typedef signed char fiat_p1024_int1;
 #  define FIAT_P1024_FIAT_INLINE
 #endif
 
+#if defined(__SIZEOF_INT128__) && !defined(FIAT_P1024_NO_INT128)
+#define FIAT_P1024_INT128 1
 FIAT_P1024_FIAT_EXTENSION typedef signed __int128 fiat_p1024_int128;
 FIAT_P1024_FIAT_EXTENSION typedef unsigned __int128 fiat_p1024_uint128;
+#endif
 
 typedef uint64_t fiat_p1024_montgomery_domain_field_element[16];
 typedef uint64_t fiat_p1024_non_montgomery_domain_field_element[16];
@@ -94,6 +97,7 @@ static inline void fiat_p1024_selectznz(uint64_t out1[16], fiat_p1024_uint1 arg1
  *   out1 = (arg1 * arg2) mod 2^64
  *   out2 = ⌊arg1 * arg2 / 2^64⌋
  */
+#ifdef FIAT_P1024_INT128
 static inline void fiat_p1024_mulx_u64(uint64_t* restrict out1, uint64_t* restrict out2, const uint64_t arg1, const uint64_t arg2) {
 	// TODO _mulx_u64 builtin, this function is equivalent to fiat_p512_mulx_u64
   const fiat_p1024_uint128 x1 = ((fiat_p1024_uint128)arg1 * arg2);
@@ -114,6 +118,30 @@ static inline void fiat_p1024_subborrowx_u64(uint64_t* out1, fiat_p1024_uint1* o
   *out1 = (uint64_t)(x1 & UINT64_C(0xffffffffffffffff));
   *out2 = (fiat_p1024_uint1)(0x0 - x2);
 }
+
+#else
+/* Targets without a 128-bit type (32-bit GCC, e.g. Xtensa): the same three helpers from
+ * 32x32->64 products and branch-free carry and borrow, so they stay constant time. */
+static inline void fiat_p1024_mulx_u64(uint64_t* restrict out1, uint64_t* restrict out2, const uint64_t arg1, const uint64_t arg2) {
+  const uint64_t a0 = (uint32_t)arg1, a1 = arg1 >> 32, b0 = (uint32_t)arg2, b1 = arg2 >> 32;
+  const uint64_t p00 = a0 * b0, p01 = a0 * b1, p10 = a1 * b0, p11 = a1 * b1;
+  const uint64_t mid = (p00 >> 32) + (uint32_t)p01 + (uint32_t)p10;
+  *out1 = (mid << 32) | (uint32_t)p00;
+  *out2 = p11 + (p01 >> 32) + (p10 >> 32) + (mid >> 32);
+}
+
+static inline void fiat_p1024_addcarryx_u64(uint64_t* out1, fiat_p1024_uint1* out2, fiat_p1024_uint1 arg1, uint64_t arg2, uint64_t arg3) {
+  const uint64_t s = arg2 + arg3 + arg1;
+  *out1 = s;
+  *out2 = (fiat_p1024_uint1)(((arg2 & arg3) | ((arg2 | arg3) & ~s)) >> 63);
+}
+
+static inline void fiat_p1024_subborrowx_u64(uint64_t* out1, fiat_p1024_uint1* out2, fiat_p1024_uint1 arg1, uint64_t arg2, uint64_t arg3) {
+  const uint64_t d = arg2 - arg3 - arg1;
+  *out1 = d;
+  *out2 = (fiat_p1024_uint1)(((~arg2 & arg3) | ((~arg2 | arg3) & d)) >> 63);
+}
+#endif
 
 void fiat_p1024_set_one(fiat_p1024_montgomery_domain_field_element out1);
 void fiat_p1024_nonzero(uint64_t* out1, const uint64_t arg1[16]);
