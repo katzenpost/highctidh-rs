@@ -26,15 +26,19 @@ fn main() {
     // provide highctidh_1024_randombytes, as the firmware's component does.
     let bare_metal = std::env::var("CARGO_CFG_TARGET_OS").is_ok_and(|os| os == "none");
     let dir = std::path::Path::new("highctidh/ctidh1024");
+    // Sorted: read_dir order follows the checkout's directory layout, and the
+    // archive's member order (so the final link) must not.
+    let mut sources: Vec<_> = std::fs::read_dir(dir)
+        .expect("highctidh sources")
+        .map(|entry| entry.expect("highctidh source").path())
+        .filter(|path| {
+            path.extension().is_some_and(|e| e == "c")
+                && !(bare_metal && path.file_name().is_some_and(|n| n == "randombytes.c"))
+        })
+        .collect();
+    sources.sort();
     let mut build = cc::Build::new();
-    for entry in std::fs::read_dir(dir).expect("highctidh sources") {
-        let path = entry.expect("highctidh source").path();
-        if path.extension().is_some_and(|e| e == "c")
-            && !(bare_metal && path.file_name().is_some_and(|n| n == "randombytes.c"))
-        {
-            build.file(&path);
-        }
-    }
+    build.files(&sources);
     if bare_metal {
         // newlib has no <endian.h>.
         build.include("bare-metal");
